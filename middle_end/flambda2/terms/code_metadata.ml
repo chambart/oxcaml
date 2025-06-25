@@ -28,6 +28,7 @@ type t =
     result_mode : Lambda.locality_mode;
     stub : bool;
     inline : Inline_attribute.t;
+    expose : Expose_attribute.t;
     zero_alloc_attribute : Zero_alloc_attribute.t;
     poll_attribute : Poll_attribute.t;
     is_a_functor : bool;
@@ -74,6 +75,8 @@ module Code_metadata_accessors (X : Metadata_view_type) = struct
   let stub t = (metadata t).stub
 
   let inline t = (metadata t).inline
+
+  let expose t = (metadata t).expose
 
   let zero_alloc_attribute t = (metadata t).zero_alloc_attribute
 
@@ -139,6 +142,7 @@ type 'a create_type =
   result_mode:Lambda.locality_mode ->
   stub:bool ->
   inline:Inline_attribute.t ->
+  expose:Expose_attribute.t ->
   zero_alloc_attribute:Zero_alloc_attribute.t ->
   poll_attribute:Poll_attribute.t ->
   is_a_functor:bool ->
@@ -157,10 +161,10 @@ type 'a create_type =
 
 let createk k code_id ~newer_version_of ~params_arity ~param_modes
     ~first_complex_local_param ~result_arity ~result_types ~result_mode ~stub
-    ~(inline : Inline_attribute.t) ~zero_alloc_attribute ~poll_attribute
-    ~is_a_functor ~is_opaque ~recursive ~cost_metrics ~inlining_arguments ~dbg
-    ~is_tupled ~is_my_closure_used ~inlining_decision ~absolute_history
-    ~relative_history ~loopify =
+    ~(inline : Inline_attribute.t) ~(expose : Expose_attribute.t)
+    ~zero_alloc_attribute ~poll_attribute ~is_a_functor ~is_opaque ~recursive
+    ~cost_metrics ~inlining_arguments ~dbg ~is_tupled ~is_my_closure_used
+    ~inlining_decision ~absolute_history ~relative_history ~loopify =
   (match stub, inline with
   | true, (Available_inline | Never_inline | Default_inline)
   | ( false,
@@ -195,6 +199,7 @@ let createk k code_id ~newer_version_of ~params_arity ~param_modes
       result_mode;
       stub;
       inline;
+      expose;
       zero_alloc_attribute;
       poll_attribute;
       is_a_functor;
@@ -240,7 +245,8 @@ let [@ocamlformat "disable"] print_inlining_paths ppf
       Inlining_history.Absolute.print absolute_history
 
 let [@ocamlformat "disable"] print ppf
-       { code_id = _; newer_version_of; stub; inline; zero_alloc_attribute; poll_attribute;
+       { code_id = _; newer_version_of; stub; inline; expose;
+         zero_alloc_attribute; poll_attribute;
          is_a_functor; is_opaque; params_arity; param_modes;
          first_complex_local_param; result_arity;
          result_types; result_mode;
@@ -252,6 +258,7 @@ let [@ocamlformat "disable"] print ppf
       @[<hov 1>%t(newer_version_of@ %a)%t@]@ \
       @[<hov 1>%t(stub@ %b)%t@]@ \
       @[<hov 1>%t(inline@ %a)%t@]@ \
+      @[<hov 1>%t(expose@ %a)%t@]@ \
       @[<hov 1>%t(%a)%t@]@ \
       @[<hov 1>%t(poll_attribute@ %a)%t@]@ \
       @[<hov 1>%t(is_a_functor@ %b)%t@]@ \
@@ -283,6 +290,11 @@ let [@ocamlformat "disable"] print ppf
     then Flambda_colours.elide
     else C.none)
     Inline_attribute.print inline
+    Flambda_colours.pop
+    (if Expose_attribute.is_default expose
+    then Flambda_colours.elide
+    else C.none)
+    Expose_attribute.print expose
     Flambda_colours.pop
     (if Zero_alloc_attribute.is_default zero_alloc_attribute
      then Flambda_colours.elide else C.none)
@@ -365,6 +377,7 @@ let free_names
       result_mode = _;
       stub = _;
       inline = _;
+      expose = _;
       zero_alloc_attribute = _;
       poll_attribute = _;
       is_a_functor = _;
@@ -407,6 +420,7 @@ let apply_renaming
        result_mode = _;
        stub = _;
        inline = _;
+       expose = _;
        zero_alloc_attribute = _;
        poll_attribute = _;
        is_a_functor = _;
@@ -460,6 +474,7 @@ let ids_for_export
       result_mode = _;
       stub = _;
       inline = _;
+      expose = _;
       zero_alloc_attribute = _;
       poll_attribute = _;
       is_a_functor = _;
@@ -499,6 +514,7 @@ let approx_equal
       result_mode = result_mode1;
       stub = stub1;
       inline = inline1;
+      expose = expose1;
       zero_alloc_attribute = zero_alloc_attribute1;
       poll_attribute = poll_attribute1;
       is_a_functor = is_a_functor1;
@@ -524,6 +540,7 @@ let approx_equal
       result_mode = result_mode2;
       stub = stub2;
       inline = inline2;
+      expose = expose2;
       zero_alloc_attribute = zero_alloc_attribute2;
       poll_attribute = poll_attribute2;
       is_a_functor = is_a_functor2;
@@ -548,6 +565,7 @@ let approx_equal
   && Lambda.eq_locality_mode result_mode1 result_mode2
   && Bool.equal stub1 stub2
   && Inline_attribute.equal inline1 inline2
+  && Expose_attribute.equal expose1 expose2
   && Zero_alloc_attribute.equal zero_alloc_attribute1 zero_alloc_attribute2
   && Poll_attribute.equal poll_attribute1 poll_attribute2
   && Bool.equal is_a_functor1 is_a_functor2
