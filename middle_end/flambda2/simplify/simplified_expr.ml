@@ -100,7 +100,7 @@ and simplified_apply =
         use_id : Apply_cont_rewrite_id.t option;
         exn_cont_use_id : Apply_cont_rewrite_id.t;
         result_arity : [`Complex] Flambda_arity.t;
-        coming_from_indirect : bool;
+        original_call : Call_kind.Function_call.t;
         callee's_code_metadata : Code_metadata.t
       }
 
@@ -182,7 +182,7 @@ let simplified_function_call_where_callee's_type_unavailable apply ~use_id
        { apply; use_id; exn_cont_use_id })
 
 let simplified_non_inlined_direct_full_application apply ~use_id
-    ~exn_cont_use_id ~result_arity ~coming_from_indirect ~callee's_code_metadata
+    ~exn_cont_use_id ~result_arity ~original_call ~callee's_code_metadata
     =
   simplified_apply
     (Simplified_non_inlined_direct_full_application
@@ -190,7 +190,7 @@ let simplified_non_inlined_direct_full_application apply ~use_id
          use_id;
          exn_cont_use_id;
          result_arity;
-         coming_from_indirect;
+         original_call;
          callee's_code_metadata
        })
 
